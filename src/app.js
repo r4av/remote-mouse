@@ -12,9 +12,15 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log('Client connected');
 
-  socket.on('mouse_move', (msg) => {
-    remote.logMe();
-    // console.log('Message: ' + msg.pageX, msg.pageY);
+  socket.on('mouse_position', (coord) => {
+    let coords = remote.mousePosition();
+    socket.emit("mouse_position", coords);
+    console.log(coords.x + " " + coords.y);
+  });
+  
+  socket.on('mouse_move', (coord) => {
+    console.log(coord.x + " " + coord.y);
+    remote.mouseMove(coord);
   });
 });
 

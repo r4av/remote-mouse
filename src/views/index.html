@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body { font: 13px Helvetica, Arial; height: 100%; width: 100%;}
+      html, body { font: 13px Helvetica, Arial; height: 100%; width: 100%;overscroll-behavior-y: contain;}
       .container-app {height: 100%; width: 100%}
       .container-mouse { display: flex; position: fixed; bottom: 0; width: 100%; }
       .mouse-button { flex: 1 1 auto; height: 50px;z-index: 1;}
@@ -20,6 +20,7 @@
   </head>
   <body>
     <div class="container-app">
+        <div id="log"></div>
         <canvas id="surface"></canvas>
         <div class="container-mouse">
             <button id="leftMouseButton" class="mouse-button" disabled>LPM</button>
@@ -28,7 +29,7 @@
     </div>
     <script>
         window.addEventListener("DOMContentLoaded", function(){
-                    
+            
             socket.on("connect", () => {
                 enableButtons();
                 notifyConnected();
@@ -39,19 +40,69 @@
             });
         });
 
-        surface.addEventListener('touchmove', handle_touchmove, false);
-        leftMouseButton.addEventListener('click', handle_left_button, false);
-        rightMouseButton.addEventListener('click', handle_right_button, false);
-
+        surface.addEventListener('touchstart', handle_touchstart, false);
+        surface.addEventListener('touchmove', handle_touchmove, true);
+        leftMouseButton.addEventListener('click', handle_left_button, true);
+        rightMouseButton.addEventListener('click', handle_right_button, true);
+        
         function handle_touchmove(evt){
+            evt.preventDefault();
             if (evt.targetTouches.length < 0){
                 throw Error(`Touch events doesn't work!`);
             }
+            let coords = evt.targetTouches[0];
+            let _x;
+            let _y;
+
+            if (coords.clientX > lastPoint.x){
+                _x = 10.0;
+            }
+            if (coords.clientX < lastPoint.x){
+                _x = -10.0;
+            }
+            // if (Math.round(coords.clientY) <= Math.round(lastPoint.y + 4)){
+            //     _y = -10.0;
+            // }
+            // if (Math.round(coords.clientY) >= Math.round(lastPoint.y + 4)){
+            //     _y = 10.0;
+            // }
+
+            lastPoint.x = coords.clientX;
+            lastPoint.y = coords.clientY;
+            // let coords = evt.targetTouches[0];
+            // let _x;
+            // let _y;
             
-            socket.emit("mouse_move", {
-                pageX : evt.targetTouches[0].pageX,
-                pageY : evt.targetTouches[0].pageY,
+            // if (window.prev_x >= coords.pageX){
+            //     _x = -10.0;
+            // }
+            //     //left side
+            // if (window.prev_x <= coords.pageX){
+            //     _x = 10.0;
+            // }
+            // if (window.prev_y >= coords.pageY){
+            //     _y = -10.0;
+            // }
+            //     //left side
+            // if (window.prev_y <= coords.pageY){
+            //     _y = 10.0;
+            // }
+             socket.emit("mouse_move", {
+                 x : _x,
+                 y : _y
+             });
+            
+            log.innerHTML = "last x: "+ lastPoint.x + "last y: " + lastPoint.y +" x: " + coords.clientX + " y: " + coords.clinetY;
+            
+        }
+
+        function handle_touchstart(evt){
+            socket.emit('mouse_position');
+            socket.on('mouse_position', function(coords){
+                    window.prev_x = coords.x;
+                    window.prev_y = coords.y;
             });
+            window.lastPoint = {x: null, y: null}
         }
 
         function handle_left_button(evt){
