@@ -1,14 +1,23 @@
 // import config from './config';
-const express = require('express')
+const app = require('express')();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+const remote = require('../src/services/remote');
 const port = 3000;
 
-async function startServer() {
-  const app = express();
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/views/index.html');
+});
 
-  app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`)
-  })
+io.on('connection', (socket) => {
+  console.log('Client connected');
 
-}
+  socket.on('mouse_move', (msg) => {
+    remote.logMe();
+    // console.log('Message: ' + msg.pageX, msg.pageY);
+  });
+});
 
-startServer();
+http.listen(port, () => {
+  console.log(`Listening on ${port}`);
+});

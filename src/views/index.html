@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Remote mouse</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { font: 13px Helvetica, Arial; height: 100%; width: 100%;}
+      .container-app {height: 100%; width: 100%}
+      .container-mouse { display: flex; position: fixed; bottom: 0; width: 100%; }
+      .mouse-button { flex: 1 1 auto; height: 50px;z-index: 1;}
+      canvas { width: 100%; height: 100%;z-index: 0;}
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io({
+            reconnectionAttempts: 5,
+        });
+    </script>
+  </head>
+  <body>
+    <div class="container-app">
+        <canvas id="surface"></canvas>
+        <div class="container-mouse">
+            <button id="leftMouseButton" class="mouse-button" disabled>LPM</button>
+            <button id="rightMouseButton" class="mouse-button" disabled>RPM</button>
+        </div>
+    </div>
+    <script>
+        window.addEventListener("DOMContentLoaded", function(){
+                    
+            socket.on("connect", () => {
+                enableButtons();
+                notifyConnected();
+            });
+            socket.on("disconnect", (reason) => {
+                disableButtons();
+                notifyDisconnected();
+            });
+        });
+
+        surface.addEventListener('touchmove', handle_touchmove, false);
+        leftMouseButton.addEventListener('click', handle_left_button, false);
+        rightMouseButton.addEventListener('click', handle_right_button, false);
+
+        function handle_touchmove(evt){
+            if (evt.targetTouches.length < 0){
+                throw Error(`Touch events doesn't work!`);
+            }
+            
+            socket.emit("mouse_move", {
+                pageX : evt.targetTouches[0].pageX,
+                pageY : evt.targetTouches[0].pageY,
+            });
+        }
+
+        function handle_left_button(evt){
+            socket.emit("mouse_left_click", { type: "left-click" });
+        }
+
+        function handle_right_button(evt){
+            socket.emit("mouse_left_click", { type: "right-click"});
+        }
+
+        // Utils methode for manipulate notification and buttons
+        function notifyConnected() {
+            const text = "Connected!";
+            let ctx = surface.getContext("2d");
+            ctx.font = "10px Arial";
+            ctx.fillStyle = "#73bf76";
+            ctx.fillText(text, surface.width/2 - ctx.measureText(text).width/2, surface.height/2);
+
+            setTimeout(function(){
+                ctx.clearRect(0, 0, surface.width, surface.height);
+            }, 500);
+        }
+        function notifyDisconnected() {
+            const text = "Disconnected!";
+            let ctx = surface.getContext("2d");
+            ctx.font = "18px Arial";
+            ctx.fillStyle = "#ff6e6e";
+            ctx.fillText(text, surface.width/2 - ctx.measureText(text).width/2, surface.height/2);
+            setTimeout(function(){
+                ctx.clearRect(0, 0, surface.width, surface.height);
+            }, 700);
+        }
+        function enableButtons() {
+            let buttons = document.getElementsByClassName("mouse-button");
+            if (buttons.length > 0){
+                for (let i = 0; i < buttons.length; i++) {
+                    buttons[i].disabled = false;
+                }
+            }
+        }
+        function disableButtons() {
+            let buttons = document.getElementsByClassName("mouse-button");
+            if (buttons.length > 0){
+                for (let i = 0; i < buttons.length; i++) {
+                    buttons[i].disabled = true;
+                }
+            }
+        }
+    </script>
+  </body>
+</html>
