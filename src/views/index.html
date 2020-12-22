@@ -13,7 +13,9 @@
     </style>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        var socket = io();
+        var socket = io({
+            reconnectionAttempts: 5,
+        });
     </script>
   </head>
   <body>
@@ -40,7 +42,14 @@
         surface.addEventListener('touchmove', process_touchmove, false);
 
         function process_touchmove(evt){
-            console.log(evt);
+            if (evt.targetTouches.length < 0){
+                throw Error(`Touch events doesn't work!`);
+            }
+            
+            socket.emit("mouse_move", {
+                pageX : evt.targetTouches[0].pageX,
+                pageY : evt.targetTouches[0].pageY,
+            });
         }
 
         // Utils methode for manipulate notification and buttons
@@ -59,7 +68,7 @@
             const text = "Disconnected!";
             let ctx = surface.getContext("2d");
             ctx.font = "18px Arial";
-            ctx.fillStyle = "#73bf76";
+            ctx.fillStyle = "#ff6e6e";
             ctx.fillText(text, surface.width/2 - ctx.measureText(text).width/2, surface.height/2);
             setTimeout(function(){
                 ctx.clearRect(0, 0, surface.width, surface.height);
