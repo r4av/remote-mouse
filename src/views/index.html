@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Remote mouse</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { font: 13px Helvetica, Arial; height: 100%; width: 100%;}
+      .container-app {height: 100%; width: 100%}
+      .container-mouse { display: flex; position: fixed; bottom: 0; width: 100%; }
+      .mouse-button { flex: 1 1 auto; height: 50px;z-index: 1;}
+      canvas { width: 100%; height: 100%;z-index: 0;}
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+    </script>
+  </head>
+  <body>
+    <div class="container-app">
+        <canvas id="surface"></canvas>
+        <div class="container-mouse">
+            <button id="left-mouse-button" class="mouse-button" disabled>LPM</button>
+            <button id="right-mouse-button" class="mouse-button" disabled>RPM</button>
+        </div>
+    </div>
+    <script>
+        window.addEventListener("DOMContentLoaded", function(){
+                    
+            socket.on("connect", () => {
+                enableButtons();
+                notifyConnected();
+            });
+            socket.on("disconnect", (reason) => {
+                disableButtons();
+                notifyDisconnected();
+            });
+        });
+
+        surface.addEventListener('touchmove', process_touchmove, false);
+
+        function process_touchmove(evt){
+            console.log(evt);
+        }
+
+        // Utils methode for manipulate notification and buttons
+        function notifyConnected() {
+            const text = "Connected!";
+            let ctx = surface.getContext("2d");
+            ctx.font = "10px Arial";
+            ctx.fillStyle = "#73bf76";
+            ctx.fillText(text, surface.width/2 - ctx.measureText(text).width/2, surface.height/2);
+
+            setTimeout(function(){
+                ctx.clearRect(0, 0, surface.width, surface.height);
+            }, 500);
+        }
+        function notifyDisconnected() {
+            const text = "Disconnected!";
+            let ctx = surface.getContext("2d");
+            ctx.font = "18px Arial";
+            ctx.fillStyle = "#73bf76";
+            ctx.fillText(text, surface.width/2 - ctx.measureText(text).width/2, surface.height/2);
+            setTimeout(function(){
+                ctx.clearRect(0, 0, surface.width, surface.height);
+            }, 700);
+        }
+        function enableButtons() {
+            let buttons = document.getElementsByClassName("mouse-button");
+            if (buttons.length > 0){
+                for (let i = 0; i < buttons.length; i++) {
+                    buttons[i].disabled = false;
+                }
+            }
+        }
+        function disableButtons() {
+            let buttons = document.getElementsByClassName("mouse-button");
+            if (buttons.length > 0){
+                for (let i = 0; i < buttons.length; i++) {
+                    buttons[i].disabled = true;
+                }
+            }
+        }
+    </script>
+  </body>
+</html>
