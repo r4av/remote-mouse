@@ -22,8 +22,8 @@
     <div class="container-app">
         <canvas id="surface"></canvas>
         <div class="container-mouse">
-            <button id="left-mouse-button" class="mouse-button" disabled>LPM</button>
-            <button id="right-mouse-button" class="mouse-button" disabled>RPM</button>
+            <button id="leftMouseButton" class="mouse-button" disabled>LPM</button>
+            <button id="rightMouseButton" class="mouse-button" disabled>RPM</button>
         </div>
     </div>
     <script>
@@ -39,9 +39,11 @@
             });
         });
 
-        surface.addEventListener('touchmove', process_touchmove, false);
+        surface.addEventListener('touchmove', handle_touchmove, false);
+        leftMouseButton.addEventListener('click', handle_left_button, false);
+        rightMouseButton.addEventListener('click', handle_right_button, false);
 
-        function process_touchmove(evt){
+        function handle_touchmove(evt){
             if (evt.targetTouches.length < 0){
                 throw Error(`Touch events doesn't work!`);
             }
@@ -50,6 +52,14 @@
                 pageX : evt.targetTouches[0].pageX,
                 pageY : evt.targetTouches[0].pageY,
             });
+        }
+
+        function handle_left_button(evt){
+            socket.emit("mouse_left_click", { type: "left-click" });
+        }
+
+        function handle_right_button(evt){
+            socket.emit("mouse_left_click", { type: "right-click"});
         }
 
         // Utils methode for manipulate notification and buttons
